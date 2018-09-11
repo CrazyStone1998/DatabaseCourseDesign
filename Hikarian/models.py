@@ -5,7 +5,7 @@ from django.db import models
 
 class userInfo(models.Model):
 
-    user_id = models.CharField(max_length=20,unique=True,primary_key=True)
+    user_id = models.CharField(max_length=20, unique=True, primary_key=True)
     passwd = models.CharField(max_length=40)
     user_name = models.CharField(max_length=15)
     id_num = models.CharField(max_length=18)
@@ -16,7 +16,7 @@ class userInfo(models.Model):
 
 
 class stationInfo(models.Model):
-    station_id = models.CharField(max_length=10,unique=True,primary_key=True)
+    station_id = models.CharField(max_length=10, unique=True, primary_key=True)
     station_name = models.CharField(max_length=10)
     city = models.CharField(max_length=10)
     province = models.CharField(max_length=10)
@@ -25,9 +25,9 @@ class stationInfo(models.Model):
 
 class trainInfo(models.Model):
 
-    train_id = models.CharField(max_length=10,unique=True,primary_key=True)
+    train_id = models.CharField(max_length=10, unique=True, primary_key=True)
     train_type = models.CharField(max_length=2)
-    startstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
+    startstation = models.ForeignKey(stationInfo, to_field='station_id',related_name='start', on_delete=models.CASCADE)
     endstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
     departuretime = models.CharField(max_length=20)
     arrivaltime = models.CharField(max_length=20)
@@ -38,7 +38,7 @@ class trainInfo(models.Model):
 
 class carriageInfo(models.Model):
 
-    carriage_id = models.CharField(max_length=10,unique=True,primary_key=True)
+    carriage_id = models.CharField(max_length=10, unique=True, primary_key=True)
     type = models.CharField(max_length=5)
     seat_num = models.IntegerField()
     unit_price = models.FloatField()
@@ -49,7 +49,7 @@ class carriageInfo(models.Model):
 
 class ticketInfo(models.Model):
 
-    ticket_id = models.CharField(max_length=10,unique=True,primary_key=True)
+    ticket_id = models.CharField(max_length=10, unique=True, primary_key=True)
     tarin_id = models.ForeignKey(trainInfo, to_field='train_id', on_delete=models.CASCADE)
     carriage_id = models.ForeignKey(carriageInfo, to_field='carriage_id', on_delete=models.CASCADE)
     site = models.CharField(max_length=10)
@@ -63,8 +63,8 @@ class ticketInfo(models.Model):
 class trainToStation(models.Model):
 
     train_id = models.ForeignKey(trainInfo, to_field='train_id', on_delete=models.CASCADE)
-    startstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
-    endstation = models.ForeignKey(stationInfo, to_field='train_id', on_delete=models.CASCADE)
+    startstation = models.ForeignKey(stationInfo, to_field='station_id', related_name='startstation', on_delete=models.CASCADE)
+    endstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
     departuretime = models.CharField(max_length=20)
     arrivaltime = models.CharField(max_length=20)
     distance = models.FloatField()
@@ -81,7 +81,7 @@ class trainCarriage(models.Model):
 
 class ticketPreplot(models.Model):
 
-    preplot_id = models.CharField(max_length=10,unique=True,primary_key=True)
+    preplot_id = models.CharField(max_length=10, unique=True, primary_key=True)
     ticket_id = models.ForeignKey(ticketInfo, to_field='ticket_id', on_delete=models.CASCADE)
     user_id = models.ForeignKey(userInfo, to_field='user_id', on_delete=models.CASCADE)
     date = models.CharField(max_length=20)
@@ -101,7 +101,7 @@ class trainSiteStatistics(models.Model):
 
 class trainSiteAssignment(models.Model):
 
-    train_id = models.ForeignObject(trainInfo, to_fields='train_id', on_delete=models.CASCADE)
+    train_id = models.ForeignKey(trainInfo, to_field='train_id', on_delete=models.CASCADE)
     sale_date = models.DateTimeField()
     site_assign_matrix = models.CharField(max_length=1000)
 
