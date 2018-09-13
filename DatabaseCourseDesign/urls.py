@@ -15,9 +15,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,re_path,include
-
+from django.views.generic.base import TemplateView
+from xxadmin import xadmin
+from Hikarian.views import hasLoggedIn
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('xadmin/', xadmin.site.urls),
+    re_path(r'^$',TemplateView.as_view(template_name='Hikarian/index.html')),
     path('api/v1/',include('Hikarian.urls',namespace='Hikarian')),
 
 ]

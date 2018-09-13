@@ -1,67 +1,71 @@
-# #!/usr/bin/python
-# # -*- coding: UTF-8 -*-
-#
-# from django.utils.deprecation import MiddlewareMixin
-# from common.auth.userSystem import userSystem
-# from django.http import JsonResponse
-# from weCheck.views import logout
-# import re
-#
-# class authenticationMiddleWare(MiddlewareMixin):
-#
-#     # 判断登陆 权限控制
-#     def process_request(self,request):
-#         '''
-#         Request 预处理函数
-#         :param request:
-#         :return:
-#         '''
-#         #错误信息
-#         context = ''
-#         if request.method == 'GET':
-#             requestData = request.GET
-#         else:
-#             requestData = request.POST
-#
-#
-#         if 'user' in request.path or 'group' in request.path or 'check' in request.path \
-#             or 'schedule' in request.path or 'history' in request.path or 'record' in request.path:
-#             # 如果用户没有认证，限制访问
-#             if not request.session.has_key('sessionID') and not request.session.has_key('token') \
-#                     and 'register' not in request.path and 'login' not in request.path:
-#                 context = 'Please login'
-#                 return JsonResponse({
-#                     'status': 403,
-#                     'message': context,
-#                 })
-#             elif request.session.has_key('sessionID') and request.session.has_key('token') \
-#                     and 'register' not in request.path and 'logout' not in request.path \
-#                     and 'login' not in request.path:
-#                 try:
-#
-#                     #用户拥有session，登陆验证
-#                     user = userSystem(request)
-#                     if not user.getUserObject():
-#                         #用户登出
-#                         logout(request)
-#
-#                         context = 'your authentication exceed the time limit'
-#                         return JsonResponse({
-#                             'status': 403,
-#                             'message': context,
-#                         })
-#                     '''
-#
-#                     权限管理
-#
-#                     pass
-#
-#
-#                     '''
-#                 except Exception as e:
-#                     context = 'somthing is wrong'
-#                     return JsonResponse({
-#                         'status': 202,
-#                         'message': context,
-#                     })
-#
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
+from django.utils.deprecation import MiddlewareMixin
+from common.auth.userSystem import userSystem
+from django.http import JsonResponse
+from Hikarian.views import logout
+'''
+
+中间件：
+    用来处理，用户访问权限以及用户的登陆状态
+
+'''
+class authenticationMiddleWare(MiddlewareMixin):
+
+    # 判断登陆 权限控制
+    def process_request(self,request):
+        '''
+        Request 预处理函数
+        :param request:
+        :return:
+        '''
+        # 错误信息
+        context = ''
+
+        if request.method == 'GET':
+            requestData = request.GET
+        else:
+            requestData = request.POST
+
+        # 限制访问url列表,需要权限或者处于登陆状态
+        if 'user' in request.path \
+                or 'order' in request.path\
+                or 'refund' in request.path \
+                or 'search' in request.path \
+                :
+
+            # 如果用户没有认证，限制访问
+            if not request.session.has_key('sessionID') \
+                    and not request.session.has_key('token'):
+                # 用户不具有登陆认证口令
+                context = 'Please login'
+
+                '''
+                    渲染模板
+                '''
+
+
+            # 如果用户拥有口令，但口令过期
+            elif request.session.has_key('sessionID') \
+                    and request.session.has_key('token'):
+
+                #用户拥有session，登陆验证
+                user = userSystem(request)
+
+                if not user.getUserObject():
+
+                    #用户登出
+                    logout(request)
+                    context = 'your authentication exceed the time limit or you has logged in another place.'
+                    '''
+                    
+                    渲染模板
+                    
+                    '''
+
+                '''
+                权限管理
+                pass
+                '''
+
