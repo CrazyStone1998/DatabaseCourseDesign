@@ -23,11 +23,6 @@ class authenticationMiddleWare(MiddlewareMixin):
         # 错误信息
         context = ''
 
-        if request.method == 'GET':
-            requestData = request.GET
-        else:
-            requestData = request.POST
-
         # 限制访问url列表,需要权限或者处于登陆状态
         if 'user' in request.path \
                 or 'order' in request.path\
@@ -41,9 +36,6 @@ class authenticationMiddleWare(MiddlewareMixin):
                 # 用户不具有登陆认证口令
                 context = 'Please login'
 
-                '''
-                    渲染模板
-                '''
 
 
             # 如果用户拥有口令，但口令过期

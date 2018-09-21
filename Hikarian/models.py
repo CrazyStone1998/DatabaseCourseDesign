@@ -33,12 +33,13 @@ class userInfo(models.Model):
     id_num = models.CharField(max_length=18)
     email = models.CharField(max_length=40)
     phone = models.CharField(max_length=11)
+    money = models.IntegerField()
     is_delete = models.BooleanField(default=False)
 
     objects = hikarianManager()
 
     @classmethod
-    def userInfoObject(cls, user_id, passwd, user_name, id_num, email=None, phone=None):
+    def userInfoObject(cls, user_id, passwd, user_name, id_num, email=None, phone=None,money = 0):
 
         new = userInfo()
 
@@ -48,6 +49,7 @@ class userInfo(models.Model):
         new.id_num = id_num
         new.email = email
         new.phone = phone
+        new.money = money
 
         new.save()
 
@@ -80,8 +82,8 @@ class trainInfo(models.Model):
     train_type = models.CharField(max_length=2)
     startstation = models.ForeignKey(stationInfo, to_field='station_id',related_name='start', on_delete=models.CASCADE)
     endstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
-    departuretime = models.CharField(max_length=20)
-    arrivaltime = models.CharField(max_length=20)
+    departuretime = models.TimeField()
+    arrivaltime = models.TimeField()
     carriagenum = models.IntegerField()
     stationnum = models.IntegerField()
     mail = models.FloatField()
@@ -136,15 +138,14 @@ class ticketInfo(models.Model):
     carriage_id = models.ForeignKey(carriageInfo, to_field='carriage_id', on_delete=models.CASCADE)
     site = models.CharField(max_length=10)
     pay = models.FloatField()
-    departuretime = models.CharField(max_length=20)
-    arrivaltime = models.CharField(max_length=20)
-    issuingstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
+    departuretime = models.DateTimeField()
+    arrivaltime = models.DateTimeField()
     is_valid = models.BooleanField(default=True)
 
     objects = hikarianManager()
 
     @classmethod
-    def ticketInfoObject(cls,ticket_id,train,carriage_id,site,pay,departuretime,arrivaltime,issuingstation):
+    def ticketInfoObject(cls,ticket_id,train,carriage_id,site,pay,departuretime,arrivaltime):
 
         new = ticketInfo()
 
@@ -155,7 +156,6 @@ class ticketInfo(models.Model):
         new.pay = pay
         new.departuretime = departuretime
         new.arrivaltime = arrivaltime
-        new.issuingstation = issuingstation
 
         new.save()
 
@@ -165,7 +165,7 @@ class trainToStation(models.Model):
 
     train_id = models.ForeignKey(trainInfo, to_field='train_id', on_delete=models.CASCADE)
     startstation = models.ForeignKey(stationInfo, to_field='station_id', on_delete=models.CASCADE)
-    departuretime = models.CharField(max_length=20)
+    departuretime = models.TimeField(max_length=20)
     duration = models.IntegerField(default=0)
     distance = models.FloatField()
 
@@ -202,10 +202,9 @@ class trainCarriage(models.Model):
         new.save()
         return new
 
-class ticketPreplot(models.Model):
+class preplot(models.Model):
 
     preplot_id = models.CharField(max_length=10, unique=True, primary_key=True)
-    ticket_id = models.ForeignKey(ticketInfo, to_field='ticket_id', on_delete=models.CASCADE)
     user_id = models.ForeignKey(userInfo, to_field='user_id', on_delete=models.CASCADE)
     date = models.CharField(max_length=20)
     is_paid = models.BooleanField(default=False)
@@ -213,24 +212,42 @@ class ticketPreplot(models.Model):
     objects = hikarianManager()
 
     @classmethod
-    def ticketPreplotObject(cls,preplot_id,ticket_id,user_id,date,is_paid):
+    def preplotObject(cls, preplot_id, user_id, date):
 
-        new = ticketPreplot()
+        new = preplot()
 
         new.preplot_id = preplot_id
-        new.ticket_id = ticket_id
         new.user_id = user_id
         new.date = date
-        new.is_paid = is_paid
 
         new.save()
 
         return new
 
+class ticketPreplot(models.Model):
+
+    preplot_id = models.ForeignKey(preplot,to_field='preplot_id',on_delete=models.CASCADE)
+    ticket_id = models.ForeignKey(ticketInfo,to_field='ticket_id',on_delete=models.CASCADE)
+    passenger = models.ForeignKey(userInfo,to_field='user_id',on_delete=models.CASCADE)
+
+
+    @classmethod
+    def ticketPreplotObject(cls,preplot_id,ticket_id,passenger):
+
+        new = ticketPreplot()
+        new.preplot_id = preplot_id
+        new.ticket_id = ticket_id
+        new.passenger = passenger
+
+        new.save()
+        return new
+
+
 class ticketRefund(models.Model):
 
-    preplot_id = models.ForeignKey(ticketPreplot, to_field='preplot_id', on_delete=models.CASCADE)
-    refund  = models.FloatField()
+    preplot_id = models.ForeignKey(preplot, to_field='preplot_id', on_delete=models.CASCADE)
+    ticket_id = models.ForeignKey(ticketInfo, to_field='ticket_id', on_delete=models.CASCADE)
+    refund = models.FloatField()
     is_success = models.BooleanField(default=False)
 
     objects = hikarianManager()
