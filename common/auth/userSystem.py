@@ -5,8 +5,6 @@ import redis
 import hashlib
 import time
 from Hikarian import models
-from django.contrib.auth.hashers import check_password
-
 
 re = redis.StrictRedis(host='127.0.0.1',port='6379',db=0)
 
@@ -23,9 +21,9 @@ def makepassword(user_id, passwd):
     :param passwd:
     :return:
     '''
-    passwd = hashlib.sha1()
-    passwd.update((user_id + passwd + 'passwd').encode('utf8'))
-    passwd = passwd.hexdigest()
+    passwd_hash = hashlib.sha1()
+    passwd_hash.update((user_id + passwd + 'passwd').encode('utf8'))
+    passwd = passwd_hash.hexdigest()
     return passwd
 
 def checkpassword(user_id, passwd, passwdDatabase):
@@ -70,7 +68,7 @@ class userSystem(object):
             # 设置 self 中维护的user_id，设置缓存时需要
             self.user_id = user_id
             # 检测 密码
-            if check_password(passwd, userlogin.passwd):
+            if checkpassword(user_id,passwd,userlogin.passwd):
                 # 设置 缓存
                 self.setCookieAndSession()
 

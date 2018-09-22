@@ -17,6 +17,7 @@ urlpatterns = [
     re_path(r'^order/*$',           views.order,          name='order'),
     re_path(r'^change/*$',          views.change,         name='change'),
     re_path(r'^pay/*$',             views.pay,            name='pay'),
+    re_path(r'^recharge/*$',        views.recharge,       name='recharge'),
 
 
 

@@ -22,17 +22,19 @@ class authenticationMiddleWare(MiddlewareMixin):
         '''
         # 错误信息
         context = ''
-
+        print(request.path)
         # 限制访问url列表,需要权限或者处于登陆状态
-        if 'user' in request.path \
-                or 'order' in request.path\
+        if 'xadmin' not in request.path \
+                and ('user' in request.path \
+                or 'order' in request.path \
                 or 'refund' in request.path \
-                or 'search' in request.path \
+                or 'search' in request.path)\
                 :
-
+            print('进入验证')
             # 如果用户没有认证，限制访问
             if not request.session.has_key('sessionID') \
                     and not request.session.has_key('token'):
+
                 # 用户不具有登陆认证口令
                 context = 'Please login'
                 return JsonResponse({

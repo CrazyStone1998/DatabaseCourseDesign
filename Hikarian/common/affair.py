@@ -3,6 +3,25 @@
 from Hikarian import models
 
 
+def searchTrain_Distance(train_id, startstation, endstation,):
+    '''
+    获取某车次经停某车站和某车站之间的距离
+    :param train_id:
+    :param startstation:
+    :param endstation:
+    :return:
+    '''
+    sql = 'select id,distance from hikarian_traintostation ' \
+            'where  train_id_id = %s ' \
+            'and (startstation_id = %s or startstation_id = %s)' % [train_id,startstation,endstation]
+
+    result = models.trainToStation.objects.raw(sql)
+
+    distance = result[1].distance - result[0].distance
+
+    return distance
+
+
 def searchTrain_Pass(station):
     '''
     获取 经过 某个车站 的所有车次
@@ -10,9 +29,9 @@ def searchTrain_Pass(station):
     :return:
     '''
     sql = 'select train_id_id from hikarian_traintostation ' \
-          'where startstation_id = %s'
+          'where startstation_id = %s' % station
 
-    return models.trainInfo.objects.raw(sql)
+    return list(models.trainToStation.objects.raw(sql))
 
 def searchTrain_Direct(startstation,endstation):
     '''
@@ -22,13 +41,12 @@ def searchTrain_Direct(startstation,endstation):
     :param endstation:
     :return:
     '''
-    sql = 'select train_id_id from hikarian_traintostation ' \
-          'where startstation_id = %s and ' \
-          'train_id_id in ( select train_id_id ' \
-                            'from hikarian_traintostation ' \
-                            'where startstation_id = %s)' % [startstation,endstation]
+    sql = 'select id,train_id_id from hikarian_traintostation ' \
+          'where startstation_id = %s ' \
+          'and train_id_id in ( select train_id_id from hikarian_traintostation ' \
+                            'where startstation_id = %s)' % (startstation,endstation)
 
-    return models.trainInfo.objects.raw(sql)
+    return list(models.trainToStation.objects.raw(sql))
 
 def searchTrainStation(train_id):
     '''
@@ -36,10 +54,9 @@ def searchTrainStation(train_id):
     :param train_id:
     :return:
     '''
-    sql = 'select startstation_id from hikarian_traintostation ' \
-          'where train_id_id = %s order by departuretime' % train_id
-
-    return models.stationInfo.objects.raw(sql)
+    sql = 'select id,startstation_id from hikarian_traintostation ' \
+          'where train_id_id = \'%s\' order by distance' % train_id
+    return list(models.trainToStation.objects.raw(sql))
 
 def searchTrainCarriage(train_id):
     '''
@@ -47,10 +64,9 @@ def searchTrainCarriage(train_id):
     :param train_id:
     :return:
     '''
-    sql = 'select carriage_id_id from hikarian_traincarriage ' \
-          'where train_id_id = %s order by carriage_num' % train_id
-
-    return models.carriageInfo.objects.raw(sql)
+    sql = 'select id,carriage_id_id from hikarian_traincarriage ' \
+          'where train_id_id = \'%s\' order by carriage_num' % train_id
+    return list(models.trainCarriage.objects.raw(sql))
 
 
 def searchTrainTicketSaled(train_id,go_date):
@@ -70,8 +86,7 @@ def searchTrainTicketSaled(train_id,go_date):
     '''
 
     sql = 'select ticket_id from hikarian_ticketinfo ' \
-          'where tarin_id_id = %s and convert(departuretime,date) = %s ' \
-          'and train_id_id = %s' % [go_date, train_id]
+          'where train_id_id = \'%s\' and convert(departuretime,date) = %s' % (train_id,go_date)
 
     ticket_array = models.ticketInfo.objects.raw(sql)
     result = []
@@ -100,23 +115,28 @@ def get_position(station,stationArray):
 def get_location(startstation,endstation,stationArray):
     start = 0
     end = 0
-    for location in range(len(stationArray)):
+    distance_start = 0
+    distance_end = 0
+    for location in stationArray:
 
-        if stationArray[location].station_id == startstation:
-            start = location
-        elif stationArray[location].station_id == endstation:
-            end = location
-    return start,end
+        if location.startstation_id == startstation:
+            start = stationArray.index(location)
+            distance_start = location.distance
+        elif location.startstation_id == endstation:
+            end = stationArray.index(location)
+            distance_end = location.distance
+    return start, end, distance_end - distance_start
 
-def is_available(start,end,site_station_Array):
+def is_available(start, end, site_station_Array):
     flag = True
 
-    for loc in range(start,end+1):
+    for loc in range(start, end+1):
         if site_station_Array[loc] == 1:
             flag = False
+            break
     return flag
 
-def get_ticket_left_between_station(train_id,startstation,endstation,date):
+def get_ticket_left_between_station(train_id, startstation, endstation, date):
     '''
 
     :param startstation:
@@ -126,32 +146,39 @@ def get_ticket_left_between_station(train_id,startstation,endstation,date):
                         {
                             'businessclass': {
                                 'num': ticket_left[0],
+                                'pay':xxx,
                                 'queue': ticket_queue[0]
 
                             },
                             'firstclass':{
                                 'num': ticket_left[1],
+                                'pay':xxx,
                                 'queue': ticket_queue[1]
                             },
                             'economyclass':{
                                 'num': ticket_left[2],
+                                'pay':xxx,
                                 'queue': ticket_queue[2]
                             },
                             'softsleeper':{
                                 'num': ticket_left[3],
+                                'pay':xxx,
                                 'queue': ticket_queue[3]
                             },
                             'hardsleeper':{
                                 'num': ticket_left[4],
+                                'pay':xxx,
                                 'queue': ticket_queue[4]
                             },
                             'softseat':{
                                 'num': ticket_left[5],
+                                'pay':xxx,
                                 'queue': ticket_queue[5]
 
                             },
                             'hardseat':{
                                 'num': ticket_left[6],
+                                'pay':xxx,
                                 'queue': ticket_queue[6]
                             },
                         }
@@ -163,17 +190,16 @@ def get_ticket_left_between_station(train_id,startstation,endstation,date):
     # 商务座 一等座 二等座 软卧 硬卧 软座 硬座 无座
     ticket_left = [0, 0, 0, 0, 0, 0, 0, 0]
     ticket_queue = [[], [], [], [], [], [], [], []]
+    ticket_pay = [0, 0, 0, 0, 0, 0, 0, 0]
 
     # 获取当前车次的 车厢 和 经停信息 用数组表示
     carriageArray = searchTrainCarriage(train_id)
     stationArray = searchTrainStation(train_id)
     # 获取始发站 终点站的站点位置
-    start_site, end_site = get_location(startstation, endstation, stationArray)
-    # 计算每一个车厢的余票
+    start_site, end_site, distance_relative = get_location(startstation, endstation, stationArray)
+    # 计算站点距离，以计算车票价格
 
-    # 初始化 座次-车站 矩阵
-    # 初始化 车厢类型对应表
-    # 初始化 出票队列
+    # 计算每一个车厢的余票
     '''
     车厢0
         车站1 车站2 车站3
@@ -183,65 +209,86 @@ def get_ticket_left_between_station(train_id,startstation,endstation,date):
 
     '''
     site_station_matrix = []
-    carriage_type_list = []
+    carriage_type_list = [0 for _ in range(len(carriageArray))]
     for everycarriage in carriageArray:
-        carriage_type_list[carriageArray.index(everycarriage)] = int(everycarriage.type)
-        site_station_matrix.append([[[0] for _ in range(len(stationArray))] for _ in range(everycarriage.site_num)])
+        # 初始化 座次-车站 矩阵
+        # 初始化 车厢类型对应表
+        # 初始化 出票队列
+        index = int(everycarriage.carriage_id.type)
+        carriage_type_list[carriageArray.index(everycarriage)] = int(everycarriage.carriage_id.type)
+        site_station_matrix.append(
+            [[0 for _ in range(len(stationArray))] for _ in range(everycarriage.carriage_id.seat_num)])
+        # 计算价格
+        if ticket_pay[index] == 0:
+            ticket_pay[index] = ticket_pay[index] + distance_relative * everycarriage.carriage_id.unit_price
 
     # 获取 当前车次 当天 车票预定信息
-    ticketArray = searchTrainTicketSaled(train_id, date)
+    ticketArray = searchTrainTicketSaled(train_id.train_id, date)
     for everyticket in ticketArray:
-        start, end = get_location(everyticket[startstation], everyticket[endstation], stationArray)
+        start, end, d = get_location(everyticket[startstation], everyticket[endstation], stationArray)
 
-        site_station_matrix[everyticket['sitenum']][everyticket['carriagenum']][start] = 1
-        site_station_matrix[everyticket['sitenum']][everyticket['carriagenum']][end] = 1
+        site_station_matrix[everyticket['carriagenum']][everyticket['sitenum']][start] = 1
+        site_station_matrix[everyticket['carriagenum']][everyticket['sitenum']][end] = 1
 
     # 获取 当前车次 当天 余票信息
+    # 每个车厢
     for each_carriage in site_station_matrix:
-        for each_site in each_carriage:
-            if is_available(start_site, end_site, each_site):
+        # 每个座位
+        seat = 0
+        for each_seat in each_carriage:
+
+            if is_available(start_site, end_site, each_seat):
                 type = carriage_type_list[site_station_matrix.index(each_carriage)]
                 ticket_left[type] += 1
                 if len(ticket_queue[type]) < 11:
                     ticket_queue[type].append(
                         {
-                            'carriage_id': carriageArray[site_station_matrix.index(each_carriage)].carriage_id,
-                            'site': each_carriage.index(each_site)
+                            'carriage_id': carriageArray[
+                                site_station_matrix.index(each_carriage)].carriage_id.carriage_id,
+                            'seat': seat
                         }
                     )
+            seat += 1
 
     train_ticket_left['businessclass'] = {
                 'num': ticket_left[0],
+                'pay':ticket_pay[0],
                 'queue': ticket_queue[0]
 
             }
     train_ticket_left['firstclass'] = {
         'num': ticket_left[1],
+        'pay': ticket_pay[1],
         'queue': ticket_queue[1]
 
     }
     train_ticket_left['economyclass'] = {
         'num': ticket_left[2],
+        'pay': ticket_pay[2],
         'queue': ticket_queue[2]
 
     }
     train_ticket_left['softsleeper'] = {
         'num': ticket_left[3],
+        'pay': ticket_pay[3],
         'queue': ticket_queue[3]
 
     }
     train_ticket_left['hardsleeper'] = {
         'num': ticket_left[4],
+        'pay': ticket_pay[4],
         'queue': ticket_queue[4]
 
     }
     train_ticket_left['softseat'] = {
         'num': ticket_left[5],
+        'pay': ticket_pay[5],
         'queue': ticket_queue[5]
 
     }
     train_ticket_left['hardseat'] = {
         'num': ticket_left[6],
+        'pay': ticket_pay[6],
         'queue': ticket_queue[6]
 
     }

@@ -76,6 +76,9 @@ class stationInfo(models.Model):
         new.save()
         return new
 
+    def __str__(self):
+        return self.station_name
+
 class trainInfo(models.Model):
 
     train_id = models.CharField(max_length=10, unique=True, primary_key=True)
@@ -106,6 +109,9 @@ class trainInfo(models.Model):
 
         new.save()
         return new
+    def __str__(self):
+
+        return self.train_id
 
 class carriageInfo(models.Model):
 
@@ -129,6 +135,10 @@ class carriageInfo(models.Model):
         new.save()
         return new
 
+    def __str__(self):
+
+        return self.carriage_id
+
 class ticketInfo(models.Model):
 
     ticket_id = models.CharField(max_length=10, unique=True, primary_key=True)
@@ -145,14 +155,16 @@ class ticketInfo(models.Model):
     objects = hikarianManager()
 
     @classmethod
-    def ticketInfoObject(cls,ticket_id,train,carriage_id,site,pay,departuretime,arrivaltime):
+    def ticketInfoObject(cls, ticket_id, train_id, carriage_id, site, pay, startstation, endstation, departuretime, arrivaltime):
 
         new = ticketInfo()
 
         new.ticket_id = ticket_id
-        new.train = train
+        new.train_id = train_id
+        new.startstation = startstation
+        new.endstation = endstation
         new.carriage_id = carriage_id
-        new.site =site
+        new.site = site
         new.pay = pay
         new.departuretime = departuretime
         new.arrivaltime = arrivaltime
@@ -170,6 +182,10 @@ class trainToStation(models.Model):
     distance = models.FloatField()
 
     objects = hikarianManager()
+
+    class Meta:
+        verbose_name = '经停信息'
+        verbose_name_plural = '经停信息'
 
     @classmethod
     def trainToStation(cls,train_id,startstation,departuretime,duration,distance):
@@ -191,6 +207,10 @@ class trainCarriage(models.Model):
     carriage_num = models.IntegerField()
 
     objects = hikarianManager()
+
+    class Meta:
+        verbose_name = '车厢组成'
+        verbose_name_plural = '车厢组成'
 
     @classmethod
     def trainCarriage(cls,train_id,carriage_id,carriage_num):
@@ -230,6 +250,12 @@ class ticketPreplot(models.Model):
     ticket_id = models.ForeignKey(ticketInfo,to_field='ticket_id',on_delete=models.CASCADE)
     passenger = models.ForeignKey(userInfo,to_field='user_id',on_delete=models.CASCADE)
 
+    objects = hikarianManager()
+
+    class Meta:
+
+        verbose_name = '订单绑定信息'
+        verbose_name_plural = '订单绑定信息'
 
     @classmethod
     def ticketPreplotObject(cls,preplot_id,ticket_id,passenger):
