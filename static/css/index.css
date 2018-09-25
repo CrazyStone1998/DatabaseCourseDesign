@@ -1,0 +1,41 @@
+body {
+    background-image: url("../img/bg.jpg");
+}
+
+
+.navbar-brand {
+    background-image: url("../img/logo.jpg");
+    width: 80px;
+    background-size: 80%;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.side-bar .list-group-item {
+    border: 0;
+    border-radius: 3px;
+    margin-bottom: 5px;
+
+}
+.list-group-item.active {
+    background-color: #098aff;
+}
+.biaoti {
+    margin-right: 50px;
+}
+.biaoti:first-child {
+    margin-left: 50px;
+}
+.login_title {
+    margin-right: 20px;
+}
+
+.register_title {
+    margin-left: 20px;
+}
+
+.container.login {
+    width: 500px;
+}
+.table {
+    width: 1000px;
+}

@@ -18,6 +18,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="vue" level="application" />
+    <orderEntry type="library" name="vue-router" level="application" />
+    <orderEntry type="library" name="jquery" level="application" />
+    <orderEntry type="library" name="bootstrap-datepicker" level="application" />
+    <orderEntry type="library" name="bootstrap-datepicker.fr" level="application" />
   </component>
   <component name="TemplatesService">
     <option name="TEMPLATE_CONFIGURATION" value="Django" />

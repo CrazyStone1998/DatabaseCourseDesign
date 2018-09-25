@@ -25,7 +25,7 @@ SECRET_KEY = 'xge=xqxa)ttc=86-5)7q#f)v85$$ba-3gtk(x^4wjxow64wg3i'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['39.106.131.88','*']
+ALLOWED_HOSTS = ['39.106.131.88','localhost:63343','*']
 
 
 # Application definition
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'xadmin',
+    # 'corsheaders',
     'crispy_forms',
     'reversion',
     'Hikarian',
@@ -52,6 +53,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'MiddleWare.auth.auth.authenticationMiddleWare',
+    # 'corsheaders.middleware.CorsMiddleware',
+    # 'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'DatabaseCourseDesign.urls'
@@ -170,11 +173,12 @@ CELERY_TIMEZONE = TIME_ZONE
 
 ICON_URL = 'http://39.106.131.88/'
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR,'static/Hikarian')
-]
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+#STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, 'static'),
+)

@@ -246,9 +246,11 @@ class preplot(models.Model):
 
 class ticketPreplot(models.Model):
 
-    preplot_id = models.ForeignKey(preplot,to_field='preplot_id',on_delete=models.CASCADE)
-    ticket_id = models.ForeignKey(ticketInfo,to_field='ticket_id',on_delete=models.CASCADE)
-    passenger = models.ForeignKey(userInfo,to_field='user_id',on_delete=models.CASCADE)
+    preplot_id = models.ForeignKey(preplot, to_field='preplot_id', on_delete=models.CASCADE)
+    ticket_id = models.ForeignKey(ticketInfo, to_field='ticket_id', on_delete=models.CASCADE)
+    passenger = models.ForeignKey(userInfo, to_field='user_id', on_delete=models.CASCADE)
+    is_refund = models.BooleanField(default=False)
+
 
     objects = hikarianManager()
 
@@ -279,11 +281,12 @@ class ticketRefund(models.Model):
     objects = hikarianManager()
 
     @classmethod
-    def ticketRefundObject(cls,preplot_id,refund,is_success):
+    def ticketRefundObject(cls, preplot_id, ticket_id, refund, is_success):
 
         new = ticketRefund()
 
         new.preplot_id = preplot_id
+        new.ticket_id = ticket_id
         new.refund = refund
         new.is_success = is_success
 

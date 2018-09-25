@@ -21,14 +21,13 @@ def searchTrain_Distance(train_id, startstation, endstation,):
 
     return distance
 
-
 def searchTrain_Pass(station):
     '''
     获取 经过 某个车站 的所有车次
     :param station:
     :return:
     '''
-    sql = 'select train_id_id from hikarian_traintostation ' \
+    sql = 'select id,train_id_id from hikarian_traintostation ' \
           'where startstation_id = %s' % station
 
     return list(models.trainToStation.objects.raw(sql))
@@ -68,7 +67,6 @@ def searchTrainCarriage(train_id):
           'where train_id_id = \'%s\' order by carriage_num' % train_id
     return list(models.trainCarriage.objects.raw(sql))
 
-
 def searchTrainTicketSaled(train_id,go_date):
     '''
     获取当前车辆已售出的票-》座位，以及 出发终点站
@@ -84,22 +82,27 @@ def searchTrainTicketSaled(train_id,go_date):
                 ...
             ]
     '''
-
+    print(go_date)
     sql = 'select ticket_id from hikarian_ticketinfo ' \
-          'where train_id_id = \'%s\' and convert(departuretime,date) = %s' % (train_id,go_date)
+          'where train_id_id = \'%s\'' % train_id
 
     ticket_array = models.ticketInfo.objects.raw(sql)
     result = []
     for ticket in ticket_array:
+        a= ticket.carriage_id
+        b =ticket.site
+
         result.append(
             {
                 'startstation': ticket.startstation,
                 'endstation': ticket.endstation,
-                'carrriagenum': ticket.carriagenum,
-                'sitenum': ticket.site
+                'carriagenum': int(a.carriage_id),
+                'sitenum': int(b)
+
             }
         )
-    return result
+    print(result)
+    return []
 
 def get_position(station,stationArray):
 
@@ -110,7 +113,6 @@ def get_position(station,stationArray):
             return location
 
     return None
-
 
 def get_location(startstation,endstation,stationArray):
     start = 0
@@ -129,7 +131,6 @@ def get_location(startstation,endstation,stationArray):
 
 def is_available(start, end, site_station_Array):
     flag = True
-
     for loc in range(start, end+1):
         if site_station_Array[loc] == 1:
             flag = False
@@ -223,7 +224,7 @@ def get_ticket_left_between_station(train_id, startstation, endstation, date):
             ticket_pay[index] = ticket_pay[index] + distance_relative * everycarriage.carriage_id.unit_price
 
     # 获取 当前车次 当天 车票预定信息
-    ticketArray = searchTrainTicketSaled(train_id.train_id, date)
+    ticketArray = searchTrainTicketSaled(train_id, date)
     for everyticket in ticketArray:
         start, end, d = get_location(everyticket[startstation], everyticket[endstation], stationArray)
 
@@ -294,3 +295,69 @@ def get_ticket_left_between_station(train_id, startstation, endstation, date):
     }
 
     return train_ticket_left
+
+def get_preplot(user):
+    '''
+    获取用户的订单信息
+    :param user:
+    :return:
+    [
+
+
+    ]
+    '''
+
+    preplot = list(models.preplot.objects.filter(user_id=user))
+
+    preplot_list = []
+    for each_preplot in preplot:
+        total_pay = 0
+
+        preplot_dic = {}
+
+        preplot_dic['preplot_id'] = each_preplot.preplot_id
+        preplot_dic['is_paid'] = each_preplot.is_paid
+        preplot_dic['date'] = each_preplot.date
+        ticket_list = []
+        ticket_query_set = list(models.ticketPreplot.objects.filter(preplot_id=each_preplot.preplot_id))
+
+        for each_ticket in ticket_query_set:
+
+            ticket_id = each_ticket.ticket_id
+            train_id = ticket_id.train_id
+            startstation = ticket_id.startstation
+            endstation = ticket_id.endstation
+            departuretime = ticket_id.departuretime
+            arrivaltime = ticket_id.arrivaltime
+            pay = ticket_id.pay
+            is_valid = ticket_id.is_valid
+            passenger = each_ticket.passenger_id
+            is_refund = each_ticket.is_refund
+
+            total_pay = total_pay + pay
+
+            ticket_list.append({
+                'ticket_id': ticket_id.ticket_id,
+                'train_id': train_id.train_id,
+                'startstation': startstation.station_name,
+                'endstation': endstation.station_name,
+                'departuretime': departuretime,
+                'arrivaltime': arrivaltime,
+                'passenger': passenger,
+                'is_valid': is_valid,
+                'is_refund': is_refund,
+                'pay': pay
+            })
+
+        preplot_dic['ticket'] = ticket_list
+        preplot_dic['total_pay'] = total_pay
+        preplot_list.append(preplot_dic)
+    print(preplot_list)
+    return preplot_list
+
+
+
+
+
+
+

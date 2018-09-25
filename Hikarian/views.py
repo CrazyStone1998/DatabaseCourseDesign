@@ -280,7 +280,7 @@ def recharge(request):
             'status': 200,
             'message': 'SUCCESS',
             'data': {
-                'money':user.money,
+                'money': user.money,
             }
         })
 
@@ -350,14 +350,17 @@ def searchdirect(request):
         return redirect('/api/v1/order')
     elif request.method == 'POST':
 
-        startstation = request.POST.get('startstation')
-        endstation = request.POST.get('endstation')
         date = request.POST.get('date')
 
-        print(startstation, endstation, date)
-
         # 后台验证 确保收到的一定不是空值
-        if startstation and endstation and date:
+        if request.POST.get('startstation') and request.POST.get('endstation') and date:
+            startstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('startstation'))
+            endstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('endstation'))
+
+            startstation = startstation.station_id
+            endstation = endstation.station_id
+
+            print(startstation, endstation, date)
 
             train_ticket_left = []
             # 直达方式 余票
@@ -377,7 +380,9 @@ def searchdirect(request):
                 start_site, end_site, distance_relative = affair.get_location(startstation,endstation,stationArray)
                 #计算站点距离，以计算车票价格
 
-
+                # 发车时间，到达时间
+                deprture = stationArray[start_site].departuretime
+                arrival = stationArray[end_site].departuretime
                 # 计算每一个车厢的余票
                 '''
                 车厢0
@@ -400,13 +405,21 @@ def searchdirect(request):
                     if ticket_pay[index] == 0:
                         ticket_pay[index] = ticket_pay[index] + distance_relative*everycarriage.carriage_id.unit_price
 
+                print('----------执行--------------')
                 # 获取 当前车次 当天 车票预定信息
+
                 ticketArray = affair.searchTrainTicketSaled(everytrain.train_id.train_id, date)
                 for everyticket in ticketArray:
-                    start, end = affair.get_location(everyticket[startstation], everyticket[endstation], stationArray)
+                    print(ticketArray)
+                    print('zhifsa;jfskfs;jsdf')
+                    print(everyticket['startstation'])
+                    print(everyticket['endstation'])
+                    print(start)
+                    start, end, distance = affair.get_location(everyticket['startstation'], everyticket['endstation'], stationArray)
 
                     site_station_matrix[everyticket['carriagenum']][everyticket['sitenum']][start] = 1
                     site_station_matrix[everyticket['carriagenum']][everyticket['sitenum']][end] = 1
+
 
 
                 # 获取 当前车次 当天 余票信息
@@ -432,8 +445,8 @@ def searchdirect(request):
                 train_ticket_left.append(
                     {
                         'train_id': everytrain.train_id.train_id,
-                        'departuretime': everytrain.train_id.departuretime,
-                        'arrivaltime': everytrain.train_id.arrivaltime,
+                        'departuretime': deprture,
+                        'arrivaltime': arrival,
 
                         'businessclass': {
                             'num': ticket_left[0],
@@ -596,7 +609,6 @@ def searchtransfer(request):
 
                         ]
 
-
                     }
 
     '''
@@ -605,18 +617,23 @@ def searchtransfer(request):
         redirect('/')
     elif request.method == 'POST':
 
-        startstation = request.POST.get('startstation')
-        endstation = request.POST.get('endstation')
-
         date = request.POST.get('date')
 
-        if startstation and endstation and date:
+        # 后台验证 确保收到的一定不是空值
+        if request.POST.get('startstation') and request.POST.get('endstation') and date:
+            startstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('startstation'))
+            endstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('endstation'))
 
+            startstation = startstation.station_id
+            endstation = endstation.station_id
+
+            print(startstation,endstation,date)
             # 中转方式 中转一次
             result = []
 
             # 获取经过起点的车辆
             # 获取经过终点的车辆
+
             trainstartArray = affair.searchTrain_Pass(startstation)
             trainendArray = affair.searchTrain_Pass(endstation)
             # 寻找 转乘 车辆
@@ -627,17 +644,25 @@ def searchtransfer(request):
                 for transfer_station_to_select in startstationArray:
 
                     select_now_loc, startloc, distance_relative_first = affair.get_location(transfer_station_to_select.startstation_id, startstation, startstationArray)
+                    # 发车时间
+                    departure_first = startstationArray[startloc].departuretime
                     if select_now_loc > startloc:
-
+                        # 到达时间
+                        arrival_first = transfer_station_to_select.departuretime
                         for transfertrain in trainendArray:
 
                             endstationArray = affair.searchTrainStation(transfertrain.train_id)
 
                             for station in endstationArray:
                                 transferloc, endloc, distance_relative_second = affair.get_location(station.startstation_id, endstation, endstationArray)
+                                # 到达时间
+                                arrival_second = endstationArray[endloc].departuretime
                                 if transferloc < endloc \
                                         and transfer_station_to_select.startstation_id == station.startstation_id \
                                         and transfer_station_to_select.departuretime < station.departuretime:
+
+                                        # 发车时间
+                                        departure_second = station.departuretime
 
                                         transfer_ticket_first = affair.get_ticket_left_between_station(everytrain.train_id.train_id,startstation,station.startstation_id, date)
                                         transfer_ticket_second = affair.get_ticket_left_between_station(transfertrain.train_id.train_id,station.startstation_id,endstation, date)
@@ -646,12 +671,12 @@ def searchtransfer(request):
                                             {
 
                                                 'train_id_first': everytrain.train_id.train_id,
-                                                'departuretime_first': everytrain.train_id.departuretime,
-                                                'arrivaltime_first': everytrain.train_id.arrivaltime,
+                                                'departuretime_first': departure_first,
+                                                'arrivaltime_first': arrival_first,
                                                 'train_id_second': transfertrain.train_id.train_id,
-                                                'departuretime_second': transfertrain.train_id.departuretime,
-                                                'arrivaltime_second': transfertrain.train_id.arrivaltime,
-                                                'transferstation_id': station.startstation_id,
+                                                'departuretime_second': departure_second,
+                                                'arrivaltime_second': arrival_second,
+                                                'transferstation_id': models.stationInfo.objects.get_or_none(station_id=station.startstation_id).station_name,
                                                 'ticket_info': [
                                                         transfer_ticket_first,
                                                         transfer_ticket_second,
@@ -704,8 +729,10 @@ def order(request):
     {
         'date':2018-5-16,
         'train_id':G3
+
         'startstation':2
         'endstation':8
+
         'departuretime':05:06
         'arrivaltime':17:56
         'pay':5000
@@ -725,56 +752,97 @@ def order(request):
     elif request.method == 'POST':
         # 获取票的详细信息
         train_id = request.POST.get('train_id')
-        startstation = models.stationInfo.objects.get_or_none(station_id=request.POST.get('startstation'))
-        endstation = models.stationInfo.objects.get_or_none(station_id=request.POST.get('endstation'))
+        startstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('startstation'))
+        endstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('endstation'))
         pay = request.POST.get('pay')
         date = request.POST.get('date')
+
+        data = eval(request.POST.get('data'))
+        print(type(data))
+        print(data)
+        print('-----------------------')
         departuretime = date + request.POST.get('departuretime')
         arrivaltime = date + request.POST.get('arrivaltime')
+        print(data[0])
+        passenger_id_num = data[0]['passenger_id_num']
+        print(passenger_id_num)
+        carriage_id = data[0]['carriage']
+        seat = data[0]['seat']
+        passenger = models.userInfo.objects.get_or_none(id_num=passenger_id_num)
+        if passenger:
+            # 形成订单
+            owner = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+            preplot_id = md5(time.strftime('%M:%S'))
+            preplot = models.preplot.preplotObject(preplot_id, owner, date)
 
-        data = request.POST.get('data')
-        # 形成订单
-        owner = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
-        preplot_id = md5(time.strftime('%M:%S'))
-        preplot = models.preplot.preplotObject(preplot_id, owner, date)
 
-
-        for each_person in eval(data):
-
-            carriage_id = each_person.get('carriage_id')
-            seat = each_person.get('seat')
-            passenger_id_num = each_person.get('passenger_id_num')
 
             #形成票
             train = models.trainInfo.objects.get_or_none(train_id=train_id)
-            print(train_id)
-            print(train)
             carriage = models.carriageInfo.objects.get_or_none(carriage_id=carriage_id)
             # carriage_num = models.trainCarriage.objects.filter(Q(train_id=train) & Q(carriage_id=carriage))[0].carriage_num
             ticket_id = md5(time.strftime('%M:%S'))
-            passenger = models.userInfo.objects.get_or_none(id_num=passenger_id_num)
 
-            ticket = models.ticketInfo.ticketInfoObject(ticket_id, train, carriage, seat, pay, startstation, endstation, datetime.strptime(departuretime, '%Y-%m-%d%H:%M'), datetime.strptime(arrivaltime, '%Y-%m-%d%H:%M'))
+            ticket = models.ticketInfo.ticketInfoObject(ticket_id, train, carriage, seat, pay, startstation, endstation, datetime.strptime(departuretime, '%Y-%m-%d%H:%M:%S'), datetime.strptime(arrivaltime, '%Y-%m-%d%H:%M:%S'))
             #形成绑定信息
             models.ticketPreplot.ticketPreplotObject(preplot, ticket, passenger)
 
-        return JsonResponse({
-            'status': 200,
-            'message': 'SUCCESS',
-        })
+            return JsonResponse({
+                'status': 200,
+                'message': 'SUCCESS',
+            })
+        else:
+            return JsonResponse({
+                'status':202,
+                'message':'user is not exist.'
+            })
 
 def refund(request):
-
+    '''
+    订单退款
+    :param request:
+    :return:
+    '''
     if request.method == 'GET':
         pass
     elif request.method == 'POST':
         preplot_id = request.POST.get('preplot_id')
+        ticket_id = request.POST.get('ticket_id')
+        refund = int(request.POST.get('pay')) * 0.5
+        user = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+        ticket = models.ticketInfo.objects.get_or_none(ticket_id=ticket_id)
+        print('------------------')
+        preplot = models.preplot.objects.get_or_none(preplot_id=preplot_id)
+
+        print('-----------')
+        ticketpreplot = models.ticketPreplot.objects.get_or_none(ticket_id=ticket)
+        if ticketpreplot.is_refund:
+            return JsonResponse({
+                'status': 202,
+                'message': '您已经办理退款手续。'
+            })
+        else:
+            ticketpreplot.is_refund = True
+            ticketpreplot.save()
+            user.money = user.money + refund
+            user.save()
+
+            models.ticketRefund.ticketRefundObject(preplot, ticket, refund, True)
+
+            return JsonResponse({
+                'status': 200,
+                'message': 'SUCCESS'
+            })
 
 
 def pay(request):
     '''
-
-    :param request:
+    支付订单
+    :param request: POST
+                    {
+                        'preplot_id':
+                        'pay':
+                    }
     :return:
     '''
     if request.method == 'GET':
@@ -782,13 +850,22 @@ def pay(request):
     elif request.method == 'POST':
 
         preplot_id = request.POST.get('preplot_id')
+        pay = request.POST.get('pay')
+        # 设置订单已支付
         preplot = models.preplot.objects.get_or_none(preplot_id=preplot_id)
-        ticket = models.ticketInfo.objects.get_or_none(ticket_id=preplot.ticket_id)
-        if ticket.is_vaild:
-            money = ticket.money
-            user = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUserObject())
-            user.money -= money
-            user.save()
+        if preplot.is_paid:
+            return JsonResponse({
+                'status':202,
+                'message':'订单已支付。'
+            })
+        else:
+            preplot.is_paid = True
+            preplot.save()
+
+        user = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+        user.money = user.money - pay
+        user.save()
+
         return JsonResponse({
             'status': 200,
             'message': 'OK',
@@ -796,13 +873,128 @@ def pay(request):
 
 
 def change(request):
+    '''
+    改签车票
+    :param request: POST
 
+    :return:
+    '''
     if request.method == 'GET':
         pass
     elif request.method == 'POST':
-        pass
+        # 获取票的详细信息
+        train_id = request.POST.get('train_id')
+        passenger_id = request.POST.get('passenger_id')
+        passenger = models.userInfo.objects.get_or_none(user_id=passenger_id)
+
+        startstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('startstation'))
+        endstation = models.stationInfo.objects.get_or_none(station_name=request.POST.get('endstation'))
+        pay = request.POST.get('pay')
+        date = request.POST.get('date')
+        departuretime = date + request.POST.get('departuretime')
+        arrivaltime = date + request.POST.get('arrivaltime')
+        print('---------------')
+        print(startstation)
+        print(endstation)
+        if passenger and startstation and endstation and date and pay and departuretime and arrivaltime and train_id:
+
+
+            # 形成订单
+            owner = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+            preplot_id = md5(time.strftime('%M:%S'))
+            preplot = models.preplot.preplotObject(preplot_id, owner, date)
+
+
+            carriage_id = request.POST.get('carriage_id')
+            seat = request.POST.get('seat')
+
+            # 形成票
+            train = models.trainInfo.objects.get_or_none(train_id=train_id)
+            carriage = models.carriageInfo.objects.get_or_none(carriage_id=carriage_id)
+            # carriage_num = models.trainCarriage.objects.filter(Q(train_id=train) & Q(carriage_id=carriage))[0].carriage_num
+            ticket_id = md5(time.strftime('%M:%S'))
+
+            ticket = models.ticketInfo.ticketInfoObject(ticket_id, train, carriage, seat, pay, startstation, endstation,
+                                                            datetime.strptime(departuretime, '%Y-%m-%d%H:%M:%S'),
+                                                            datetime.strptime(arrivaltime, '%Y-%m-%d%H:%M:%S'))
+            # 形成绑定信息
+            models.ticketPreplot.ticketPreplotObject(preplot, ticket, passenger)
+            old_preplot_id = request.POST.get('old_preplot_id')
+            old_ticke_id = request.POST.get('old_ticket_id')
+
+            old_ticke = models.ticketInfo.objects.get_or_none(ticket_id=old_ticke_id)
+            print(old_ticke)
+            print(old_ticke_id)
+            old_ticke.is_valid = False
+            old_ticke.save()
+
+            old_preplot = models.ticketPreplot.objects.get_or_none(ticket_id=old_ticke)
+            old_preplot.is_refund = True
+            old_preplot.save()
+
+            user = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+            user.money = user.money + old_ticke.pay
+            user.save()
+
+            preplot_info = models.preplot.objects.get_or_none(preplot_id=old_preplot_id)
+            models.ticketRefund.ticketRefundObject(preplot_info, old_ticke, old_ticke.pay, True)
+
+            return JsonResponse({
+                'status': 200,
+                'message': 'SUCCESS',
+            })
+        else:
+            return JsonResponse(
+                {
+                    'status':202,
+                    'message':'user is not exist.'
+                }
+            )
+
 
 def prelot(request):
+    '''
+    获取 订单信息
+    :param request: GET
+    :return:
+    {
+        'status':
+        'message':
+        'data':[
+                    {
+                        'preplot_id':
+                        'total_pay':
+                        'is_paid':
+                        'date':
+
+                        'ticket':[
+                                    {
+                                        'ticket_id':
+                                        'train_id':
+                                        'startstation':
+                                        'endstation':
+                                        'departuretime':
+                                        'arrivaltime':
+                                        'passenger':
+                                        'pay':
+                                        'is_valid':
+                                        'is_refund':
+                                    },
+                                    .......
+                                ]
+                    }
+                ]
+    }
+    '''
 
     if request.method == 'GET':
-        user = models.userInfo.objects.get_or_none(userSystem(request).getUserObject())
+        user = models.userInfo.objects.get_or_none(user_id=userSystem(request).getUsername())
+
+        preplot_list = affair.get_preplot(user)
+
+        return JsonResponse({
+            'status': 200,
+            'message': 'OK',
+            'data': preplot_list,
+
+        })

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Hikarian</title>
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/bootstrap-datepicker/1.8.0/css/bootstrap-datepicker.min.css" rel="stylesheet">
+    <link type="text/css" href="../static/css/index.css" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <div class="navbar navbar-default">
+            <div class="container">
+                <h1>Hikarian</h1>
+                <div class="navbar-header">
+                    <a href="index.html" class="navbar-brand"></a>
+                </div>
+                <div class="nav navbar-nav">
+                    <router-link class="biaoti" to="/">首页</router-link>
+                    <router-link class="biaoti" to="/search_left_ticket">余票查询</router-link>
+                    <router-link class="biaoti" to="/preplot_manage">订单管理</router-link>
+                    <router-link class="biaoti" to="/mine_info">我的信息</router-link>
+
+
+                </div>
+                <ul class="nav navbar-nav navbar-right">
+                    {{ user_name }}
+                    <div v-if="flag == false">
+
+                        <router-link to="/login" class="login_title" >登录</router-link>
+                        <router-link to="/register" class="register_title" >注册</router-link>
+                    </div>
+                    <div v-else >
+                        <h1>{{ user_id }}</h1>
+                        <router-link to="mine_info" class="user_info" >我的信息 {{ user_id }}</router-link>
+                        <button style="margin-left: 50px"  @click="clicked_logout">注销</button>
+
+                    </div>
+                </ul>
+            </div>
+        </div>
+        <router-view @get_user="get_user_id"></router-view>
+    </div>
+    <script src="https://cdn.bootcss.com/vue/2.5.17-beta.0/vue.min.js"></script>
+    <script src="https://cdn.bootcss.com/vue-router/3.0.1/vue-router.min.js"></script>
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap-datepicker/1.8.0/js/bootstrap-datepicker.min.js"></script>
+    <script src="https://cdn.bootcss.com/bootstrap-datepicker/1.8.0/locales/bootstrap-datepicker.fr.min.js"></script>
+    <script src="../static/js/index.js"></script>
+</body>
+</html>
