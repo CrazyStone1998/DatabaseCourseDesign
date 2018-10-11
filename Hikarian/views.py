@@ -141,11 +141,9 @@ def register(request):
             id_num = request.POST.get('id_num')
             email = request.POST.get('email')
             phone = request.POST.get('phone')
-            print('zhixingle')
             # 调用 model类的 新建对象方法 存储用户对象
             models.userInfo.userInfoObject(user_id,passwd,user_name,id_num,email,phone)
             # 返回 json
-            print('---------------------')
             return JsonResponse({
                 'status': 200,
                 'message': 'OK',
